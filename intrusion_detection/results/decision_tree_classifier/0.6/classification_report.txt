@@ -1,10 +1,10 @@
-Accuracy: 0.9986867414761839
+Accuracy: 0.998682325677516
               precision    recall  f1-score   support
 
-      Benign       1.00      1.00      1.00    908560
-         DoS       1.00      1.00      1.00    152676
-     Exploit       0.98      0.98      0.98      7268
-        Scan       0.99      0.99      0.99     63794
+      Benign       1.00      1.00      1.00    908686
+         DoS       1.00      1.00      1.00    152818
+     Exploit       0.98      0.98      0.98      7211
+        Scan       0.99      0.99      0.99     63583
 
     accuracy                           1.00   1132298
    macro avg       0.99      0.99      0.99   1132298
