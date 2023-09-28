@@ -479,3 +479,7 @@ pyrightconfig.json
 /ass02.pdf
 /malware_classification/*.txt
 /malware_classification/*.csv
+/spam_classification/test-mails/
+/spam_classification/train-mails/
+/spam_classification/test-mails.csv
+/spam_classification/train-mails.csv
