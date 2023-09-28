@@ -477,6 +477,5 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/jetbrains+all,pycharm,intellij,visualstudiocode,jupyternotebooks,java,python
 /intrusion_detection/MachineLearningCVE/
 /ass02.pdf
-/malware_detection/._apt_trace_labels.txt
-/malware_detection/api_trace.csv
-/malware_detection/apt_trace_labels.txt
+/malware_classification/*.txt
+/malware_classification/*.csv
