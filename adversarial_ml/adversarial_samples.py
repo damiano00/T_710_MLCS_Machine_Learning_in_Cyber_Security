@@ -1,11 +1,11 @@
 """
 author: Damiano Pasquini
 email: damiano23@ru.is
-course: Machine Learning and Cybersecurity @ RU
+course: Machine Learning in Cybersecurity @ RU
 """
 
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 from foolbox.attacks import SaliencyMapAttack
 from foolbox.criteria import TargetClass
 from foolbox.models import TensorFlowEagerModel
@@ -16,14 +16,14 @@ import keras
 
 
 def pre_process():
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_train = x_train.reshape(60000, 28, 28, 1)  # reshape
-    x_train = x_train.astype('float32') / 255  # normalize
-    x_test = x_test.reshape(10000, 28, 28, 1)
-    x_test = x_test.astype('float32') / 255
-    y_train = to_categorical(y_train)  # one-hot encoding
-    y_test = to_categorical(y_test)
-    return x_train, x_test, y_train, y_test
+    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+    X_train = X_train.reshape(X_train.shape[0], 28, 28, 1)  # reshape
+    X_train = X_train.astype('float32') / 255  # normalize
+    X_test = X_test.reshape(X_test.shape[0], 28, 28, 1)
+    X_test = X_test.astype('float32') / 255
+    y_train = to_categorical(y_train, 10)  # one-hot encoding
+    y_test = to_categorical(y_test, 10)
+    return X_train, X_test, y_train, y_test
 
 
 def load_model(path="mnist_cnn_model.h5"):
@@ -31,31 +31,43 @@ def load_model(path="mnist_cnn_model.h5"):
     return model
 
 
-def run_attack(pretrained_model, x_test, y_test, target_class):
-    fmodel = TensorFlowEagerModel(pretrained_model, bounds=(0, 255))  # instantiate a Foolbox model
-    attack = SaliencyMapAttack(model=fmodel, criterion=TargetClass(target_class))  # Apply the SaliencyMapAttack
-    input_samples = x_test[:10]
-    original_labels = np.argmax(y_test[:10], axis=1)
-    adversarial = attack(input_samples, original_labels)
-
-    # Evaluate the model on the adversarial samples
-    test_loss, test_acc = pretrained_model.evaluate(adversarial, y_test[:10])
-    print(f'Test accuracy: {test_acc * 100:.2f}%')
-    return adversarial
+def run_single_attack(kmodel, X_test, y_test, target):
+    fmodel = TensorFlowEagerModel(kmodel, bounds=(0, 255))
+    attack = SaliencyMapAttack(model=fmodel, criterion=TargetClass(target))
+    image = np.array([X_test[0]])
+    label = np.array([y_test[0]])
+    adv_image = attack(image, label)
+    # orig_predict = np.argmax(kmodel.predict(images))
+    adv_predict = np.argmax(kmodel.predict(adv_image))
+    return adv_image, adv_predict
 
 
-def plot_adversarial_samples(y_test, samples):
-    adversarial = samples
-    for i in range(10):
-        plt.subplot(1, len(adversarial), i + 1)
-        plt.imshow(adversarial[i].reshape(28, 28), cmap='gray')
-        plt.title(f'Predicted: {np.argmax(y_test[i])}')
-        # todo print input label and adversarial label
-        plt.axis('off')
+def run_complete_attack(kmodel, X_test, y_test):
+    fmodel = TensorFlowEagerModel(kmodel, bounds=(0, 255))
+    attack = SaliencyMapAttack(model=fmodel, criterion=TargetClass(0))
+    adv_samples = []
+    for target_class in range(10):
+        target_samples = []
+        for i in range(len(X_test)):
+            # TODO: check when to stop (when there are ten samples for each class)
+            image = np.array([X_test[i]])
+            label = np.array([y_test[i]])
+            adv_image = attack(image, label)
+            target_samples.append(adv_image)
+            print(f"Target class: {target_class}, sample: {i}")
+        adv_samples.append(target_samples)
+    return adv_samples
+
+def plot_matrix(adv):
+    plt.subplot(10, len(adv), 1)
+    plt.imshow(adv[0].reshape(28, 28), cmap='gray')
+    plt.axis('off')
     plt.show()
 
-x_train, x_test, y_train, y_test = pre_process()
+
+X_train, X_test, y_train, y_test = pre_process()
 model = load_model()
-attack_results = run_attack(model, x_test, y_test, 5)
-plot_adversarial_samples(y_test, attack_results)
-np.save('samples.npy', attack_results)
+# adv_predict = run_single_attack(model, X_test, y_test, 1)
+adv_matrix = run_complete_attack(model, X_test, y_test)
+plot_matrix(adv_matrix)
+np.save('adv_matrix.npy', adv_matrix)
